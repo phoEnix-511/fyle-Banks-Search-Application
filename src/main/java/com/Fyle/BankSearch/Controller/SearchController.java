@@ -1,6 +1,8 @@
 package com.Fyle.BankSearch.Controller;
 
 import java.io.FileInputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -54,8 +56,14 @@ public class SearchController{
 		}
 
 		try {
-			Connection connection = DriverManager.getConnection(props.getProperty("dbstring"), props.getProperty("username"),
-					props.getProperty("password"));
+			URI dbUri = new URI(System.getenv("DATABASE_URL"));
+
+		    String username = dbUri.getUserInfo().split(":")[0];
+		    String password = dbUri.getUserInfo().split(":")[1];
+		    String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath() + "?sslmode=require";
+
+			
+			Connection connection = DriverManager.getConnection(dbUrl, username, password);
 			Statement statement = connection.createStatement();
 			ResultSet result = statement.executeQuery(query);
 
@@ -65,7 +73,7 @@ public class SearchController{
 						result.getString("state"));
 				banks.add(bank);
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -111,8 +119,14 @@ public class SearchController{
 		}
 		
 		try {
-			Connection connection = DriverManager.getConnection(props.getProperty("dbstring"), props.getProperty("username"),
-					props.getProperty("password"));
+			URI dbUri = new URI(System.getenv("DATABASE_URL"));
+
+		    String username = dbUri.getUserInfo().split(":")[0];
+		    String password = dbUri.getUserInfo().split(":")[1];
+		    String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath() + "?sslmode=require";
+
+			
+			Connection connection = DriverManager.getConnection(dbUrl, username, password);
 			Statement statement = connection.createStatement();
 			ResultSet result = statement.executeQuery(SqlQuery);
 
@@ -122,7 +136,7 @@ public class SearchController{
 						result.getString("state"));
 				banks.add(bank);
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
