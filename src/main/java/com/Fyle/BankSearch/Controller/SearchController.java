@@ -1,5 +1,6 @@
 package com.Fyle.BankSearch.Controller;
 
+import java.io.FileInputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.springframework.util.NumberUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,10 +21,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.Fyle.BankSearch.Beans.Bank;
 
 @RestController
-public class SearchController {
-
+public class SearchController{
+	
+	private Properties props=new Properties();
+	
 	@RequestMapping(value = "/api/branches/autocomplete", method = RequestMethod.GET)
 	public Map<String, List> controllerMethod(@RequestParam Map<String, String> customQuery) {
+		
+		try {
+			props.load(new FileInputStream("db.properties"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
 		String q = "", limit = "", offset = "";
 
 		List<Bank> banks = new ArrayList<>();
@@ -40,17 +54,15 @@ public class SearchController {
 		}
 
 		try {
-			Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/fyleDb", "postgres",
-					"postgres");
+			Connection connection = DriverManager.getConnection(props.getProperty("dbstring"), props.getProperty("username"),
+					props.getProperty("password"));
 			Statement statement = connection.createStatement();
 			ResultSet result = statement.executeQuery(query);
 
 			while (result.next()) {
-				System.out.println(result);
 				Bank bank = new Bank(result.getString("ifsc"), result.getInt("bank_id"), result.getString("branch"),
 						result.getString("address"), result.getString("city"), result.getString("district"),
 						result.getString("state"));
-				System.out.println(result.getInt("bank_id"));
 				banks.add(bank);
 			}
 		} catch (SQLException e) {
@@ -65,6 +77,19 @@ public class SearchController {
 
 	@RequestMapping(value = "/api/branches", method = RequestMethod.GET)
 	public Map<String, List> searchBranches(@RequestParam Map<String, String> query) {
+		
+		
+		
+
+		try {
+			props.load(new FileInputStream("db.properties"));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
 		String q = "", limit = "", offset = "";
 		List<Bank> banks = new ArrayList<>();
 		if (query.containsKey("q"))
@@ -84,15 +109,14 @@ public class SearchController {
 			offset = query.get("offset");
 			SqlQuery += " OFFSET " + offset + ";";
 		}
-
+		
 		try {
-			Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/fyleDb", "postgres",
-					"postgres");
+			Connection connection = DriverManager.getConnection(props.getProperty("dbstring"), props.getProperty("username"),
+					props.getProperty("password"));
 			Statement statement = connection.createStatement();
 			ResultSet result = statement.executeQuery(SqlQuery);
 
 			while (result.next()) {
-				System.out.println(result);
 				Bank bank = new Bank(result.getString("ifsc"), result.getInt("bank_id"), result.getString("branch"),
 						result.getString("address"), result.getString("city"), result.getString("district"),
 						result.getString("state"));
