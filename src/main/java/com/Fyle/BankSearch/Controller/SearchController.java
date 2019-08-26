@@ -21,129 +21,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Fyle.BankSearch.Beans.Bank;
+import com.Fyle.BankSearch.Service.SearchService;
 
 @RestController
-public class SearchController{
-	
-	private Properties props=new Properties();
-	
-	@RequestMapping(value = "/api/branches/autocomplete", method = RequestMethod.GET)
-	public Map<String, List> controllerMethod(@RequestParam Map<String, String> customQuery) {
-		
-		try {
-			props.load(new FileInputStream("db.properties"));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		
-		String q = "", limit = "", offset = "";
+public class SearchController {
+    private SearchService service = new SearchService();
 
-		List<Bank> banks = new ArrayList<>();
-		if (customQuery.containsKey("q"))
-			q = customQuery.get("q");
-		q = q.toLowerCase();
-		String query = "Select * from branches where LOWER(branch) like '%" + q + "%' order by ifsc";
-		if (customQuery.containsKey("limit")) {
-			limit = customQuery.get("limit");
-			query += " LIMIT " + limit;
-		}
-		if (customQuery.containsKey("offset")) {
-			offset = customQuery.get("offset");
-			query += " OFFSET " + offset + ";";
-		}
+    @RequestMapping(value = "/api/branches/autocomplete", method = RequestMethod.GET)
+    public Map<String, List> controllerMethod(@RequestParam Map<String, String> customQuery) {
+        return service.autocompleteService(customQuery);
+    }
 
-		try {
-			URI dbUri = new URI(System.getenv("DATABASE_URL"));
+    @RequestMapping(value = "/api/branches", method = RequestMethod.GET)
+    public Map<String, List> searchBranches(@RequestParam Map<String, String> query) {
 
-		    String username = dbUri.getUserInfo().split(":")[0];
-		    String password = dbUri.getUserInfo().split(":")[1];
-		    String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath() + "?sslmode=require";
-
-			
-			Connection connection = DriverManager.getConnection(dbUrl, username, password);
-			Statement statement = connection.createStatement();
-			ResultSet result = statement.executeQuery(query);
-
-			while (result.next()) {
-				Bank bank = new Bank(result.getString("ifsc"), result.getInt("bank_id"), result.getString("branch"),
-						result.getString("address"), result.getString("city"), result.getString("district"),
-						result.getString("state"));
-				banks.add(bank);
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		return banks;
-		Map<String, List> map = new HashMap();
-		map.put("branches", banks);
-		return map;
-	}
-
-	@RequestMapping(value = "/api/branches", method = RequestMethod.GET)
-	public Map<String, List> searchBranches(@RequestParam Map<String, String> query) {
-		
-		
-		
-
-		try {
-			props.load(new FileInputStream("db.properties"));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		
-		String q = "", limit = "", offset = "";
-		List<Bank> banks = new ArrayList<>();
-		if (query.containsKey("q"))
-			q = query.get("q");
-		q = q.toLowerCase();
-		String cond = "";
-		if (q.chars().allMatch(Character::isDigit)) {
-			cond = "bank_id,";
-		}
-		String SqlQuery = "Select * from branches where '" + q + "' in (Lower(ifsc)," + cond
-				+ "  Lower(branch), Lower(address), Lower(city), Lower(district), Lower(state)) order by ifsc ";
-		if (query.containsKey("limit")) {
-			limit = query.get("limit");
-			SqlQuery += " LIMIT " + limit;
-		}
-		if (query.containsKey("offset")) {
-			offset = query.get("offset");
-			SqlQuery += " OFFSET " + offset + ";";
-		}
-		
-		try {
-			URI dbUri = new URI(System.getenv("DATABASE_URL"));
-
-		    String username = dbUri.getUserInfo().split(":")[0];
-		    String password = dbUri.getUserInfo().split(":")[1];
-		    String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath() + "?sslmode=require";
-
-			
-			Connection connection = DriverManager.getConnection(dbUrl, username, password);
-			Statement statement = connection.createStatement();
-			ResultSet result = statement.executeQuery(SqlQuery);
-
-			while (result.next()) {
-				Bank bank = new Bank(result.getString("ifsc"), result.getInt("bank_id"), result.getString("branch"),
-						result.getString("address"), result.getString("city"), result.getString("district"),
-						result.getString("state"));
-				banks.add(bank);
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		return banks;
-		Map<String, List> map = new HashMap();
-		map.put("branches", banks);
-		return map;
-	}
+        return service.searchBranchService(query);
+    }
 
 }
